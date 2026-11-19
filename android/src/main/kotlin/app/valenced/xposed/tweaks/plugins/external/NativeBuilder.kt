@@ -31,13 +31,15 @@ internal fun loadNativeBuilder(
     require(jar.isFile) { "dist.android.path does not exist: ${android.path}" }
     jar.requireInside(dir, "dist.android.path", android.path)
 
+    val loadableJar = remapJarForObfuscatedXposedIfNeeded(jar, dexCache, pluginId)
+
     // Android 14+ refuses to load a writable DEX file.
-    jar.setReadOnly()
+    loadableJar.setReadOnly()
 
     // The parent must be the module class loader, which has the plugin API.
     val moduleLoader = PluginBuilder::class.java.classLoader!!
     val loader = DexClassLoader(
-        jar.absolutePath,
+        loadableJar.absolutePath,
         dexCache.absolutePath,
         null,
         CompositeClassLoader(moduleLoader, depLoaders),
